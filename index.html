@@ -31,6 +31,20 @@
             border-radius: 0.375rem;
             margin: 1rem;
         }
+        .edit-input {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        .edit-select {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
     </style>
 </head>
 <body>
@@ -113,6 +127,7 @@
                 function TimeTracker() {
                     const [entries, setEntries] = useState([]);
                     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+                    const [editingEntry, setEditingEntry] = useState(null);
                     const fileInputRef = useRef(null);
                     const [newEntry, setNewEntry] = useState({
                         category: '',
@@ -170,6 +185,38 @@
 
                     const deleteEntry = (id) => {
                         setEntries(entries.filter(entry => entry.id !== id));
+                        setEditingEntry(null); // Close editing if this entry was being edited
+                    };
+
+                    const startEditing = (entry) => {
+                        setEditingEntry({
+                            id: entry.id,
+                            category: entry.category,
+                            description: entry.description,
+                            hours: entry.hours.toString(),
+                            date: entry.date
+                        });
+                    };
+
+                    const cancelEditing = () => {
+                        setEditingEntry(null);
+                    };
+
+                    const saveEdit = () => {
+                        if (editingEntry && editingEntry.category && editingEntry.description && editingEntry.hours) {
+                            setEntries(entries.map(entry => 
+                                entry.id === editingEntry.id 
+                                    ? {
+                                        ...entry,
+                                        category: editingEntry.category,
+                                        description: editingEntry.description,
+                                        hours: parseFloat(editingEntry.hours),
+                                        date: editingEntry.date
+                                    }
+                                    : entry
+                            ));
+                            setEditingEntry(null);
+                        }
                     };
 
                     const getEntriesForDate = (date) => {
@@ -269,7 +316,8 @@
                                             React.createElement('li', {}, '• Export: Download JSON with your records'),
                                             React.createElement('li', {}, '• Import: Load JSON to restore data'),
                                             React.createElement('li', {}, '• Save to Google Drive, Dropbox etc.'),
-                                            React.createElement('li', {}, '• Import on any device to continue')
+                                            React.createElement('li', {}, '• Import on any device to continue'),
+                                            React.createElement('li', { className: 'font-medium text-blue-800 mt-2' }, '• ✨ New: Click Edit (✏️) to modify existing entries!')
                                         )
                                     )
                                 )
@@ -340,21 +388,80 @@
                                     )
                                 ),
                                 todayEntries.length > 0 ? React.createElement('div', { className: 'space-y-2' },
-                                    ...todayEntries.map(entry =>
-                                        React.createElement('div', { key: entry.id, className: 'flex items-center justify-between bg-white p-3 rounded border' },
-                                            React.createElement('div', { className: 'flex-1' },
-                                                React.createElement('span', { className: 'font-medium text-blue-600' }, entry.category),
-                                                ' • ',
-                                                React.createElement('span', { className: 'text-gray-700' }, entry.description),
-                                                ' • ',
-                                                React.createElement('span', { className: 'font-medium' }, \`\${entry.hours}h\`)
-                                            ),
-                                            React.createElement('button', {
-                                                onClick: () => deleteEntry(entry.id),
-                                                className: 'text-red-500 hover:text-red-700 p-1 text-lg'
-                                            }, '🗑️')
-                                        )
-                                    )
+                                    ...todayEntries.map(entry => {
+                                        const isEditing = editingEntry && editingEntry.id === entry.id;
+                                        
+                                        if (isEditing) {
+                                            // Edit mode
+                                            return React.createElement('div', { key: entry.id, className: 'bg-blue-50 border border-blue-200 p-3 rounded' },
+                                                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-2 mb-3' },
+                                                    React.createElement('select', {
+                                                        value: editingEntry.category,
+                                                        onChange: (e) => setEditingEntry({...editingEntry, category: e.target.value}),
+                                                        className: 'edit-select'
+                                                    },
+                                                        ...categories.map(cat => React.createElement('option', { key: cat, value: cat }, cat))
+                                                    ),
+                                                    React.createElement('input', {
+                                                        type: 'text',
+                                                        value: editingEntry.description,
+                                                        onChange: (e) => setEditingEntry({...editingEntry, description: e.target.value}),
+                                                        className: 'edit-input',
+                                                        placeholder: 'Description/Ticket'
+                                                    }),
+                                                    React.createElement('input', {
+                                                        type: 'number',
+                                                        step: '0.5',
+                                                        min: '0',
+                                                        max: '8',
+                                                        value: editingEntry.hours,
+                                                        onChange: (e) => setEditingEntry({...editingEntry, hours: e.target.value}),
+                                                        className: 'edit-input',
+                                                        placeholder: 'Hours'
+                                                    }),
+                                                    React.createElement('input', {
+                                                        type: 'date',
+                                                        value: editingEntry.date,
+                                                        onChange: (e) => setEditingEntry({...editingEntry, date: e.target.value}),
+                                                        className: 'edit-input'
+                                                    })
+                                                ),
+                                                React.createElement('div', { className: 'flex items-center gap-2' },
+                                                    React.createElement('button', {
+                                                        onClick: saveEdit,
+                                                        className: 'px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700'
+                                                    }, '💾 Save'),
+                                                    React.createElement('button', {
+                                                        onClick: cancelEditing,
+                                                        className: 'px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700'
+                                                    }, '❌ Cancel')
+                                                )
+                                            );
+                                        } else {
+                                            // View mode
+                                            return React.createElement('div', { key: entry.id, className: 'flex items-center justify-between bg-white p-3 rounded border' },
+                                                React.createElement('div', { className: 'flex-1' },
+                                                    React.createElement('span', { className: 'font-medium text-blue-600' }, entry.category),
+                                                    ' • ',
+                                                    React.createElement('span', { className: 'text-gray-700' }, entry.description),
+                                                    ' • ',
+                                                    React.createElement('span', { className: 'font-medium' }, \`\${entry.hours}h\`)
+                                                ),
+                                                React.createElement('div', { className: 'flex items-center gap-1 ml-2' },
+                                                    React.createElement('button', {
+                                                        onClick: () => startEditing(entry),
+                                                        className: 'text-blue-500 hover:text-blue-700 p-1 text-sm',
+                                                        title: 'Edit entry'
+                                                    }, '✏️'),
+                                                    React.createElement('button', {
+                                                        onClick: () => deleteEntry(entry.id),
+                                                        className: 'text-red-500 hover:text-red-700 p-1 text-sm',
+                                                        title: 'Delete entry'
+                                                    }, '🗑️')
+                                                )
+                                            );
+                                        }
+                                    })
                                 ) : null
                             )
                         ),
@@ -381,8 +488,25 @@
                                         ),
                                         React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-2' },
                                             ...dayEntries.map(entry =>
-                                                React.createElement('div', { key: entry.id, className: 'text-sm text-gray-600 bg-gray-50 p-2 rounded' },
-                                                    React.createElement('strong', {}, entry.category), \` \${entry.description} \`, React.createElement('em', {}, \`\${entry.hours}h\`)
+                                                React.createElement('div', { key: entry.id, className: 'text-sm text-gray-600 bg-gray-50 p-2 rounded flex justify-between items-center' },
+                                                    React.createElement('span', {},
+                                                        React.createElement('strong', {}, entry.category), \` \${entry.description} \`, React.createElement('em', {}, \`\${entry.hours}h\`)
+                                                    ),
+                                                    React.createElement('div', { className: 'flex gap-1' },
+                                                        React.createElement('button', {
+                                                            onClick: () => {
+                                                                setSelectedDate(entry.date);
+                                                                startEditing(entry);
+                                                            },
+                                                            className: 'text-blue-500 hover:text-blue-700 text-xs',
+                                                            title: 'Edit this entry'
+                                                        }, '✏️'),
+                                                        React.createElement('button', {
+                                                            onClick: () => deleteEntry(entry.id),
+                                                            className: 'text-red-500 hover:text-red-700 text-xs',
+                                                            title: 'Delete this entry'
+                                                        }, '🗑️')
+                                                    )
                                                 )
                                             )
                                         )
