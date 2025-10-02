@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,6 +10,11 @@
     <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone@7.22.5/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
     <style>
         .loading-spinner {
             border: 3px solid #f3f4f6;
@@ -38,12 +44,25 @@
             padding: 0.25rem 0.5rem;
             font-size: 0.875rem;
         }
+        .dark .edit-input {
+            background: #374151;
+            border-color: #4b5563;
+            color: #f9fafb;
+        }
         .edit-select {
             background: white;
             border: 1px solid #d1d5db;
             border-radius: 0.375rem;
             padding: 0.25rem 0.5rem;
             font-size: 0.875rem;
+        }
+        .dark .edit-select {
+            background: #374151;
+            border-color: #4b5563;
+            color: #f9fafb;
+        }
+        * {
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
     </style>
 </head>
@@ -56,487 +75,527 @@
             <p class="text-sm text-gray-500 mt-2">Please wait...</p>
         </div>
     </div>
-    
-    <!-- Error fallback -->
-    <div id="error" class="hidden">
-        <div class="error-message">
-            <h2 class="font-bold text-lg mb-2">❌ React Loading Error</h2>
-            <p>React failed to load. This sometimes happens in artifacts.</p>
-            <p class="mt-2"><strong>Solution:</strong> Copy this code to GitHub Pages where React works 100%.</p>
-            <button onclick="location.reload()" class="mt-3 px-4 py-2 bg-blue-600 text-white rounded">
-                🔄 Try Again
-            </button>
-        </div>
+
+```
+<!-- Error fallback -->
+<div id="error" class="hidden">
+    <div class="error-message">
+        <h2 class="font-bold text-lg mb-2">❌ React Loading Error</h2>
+        <p>React failed to load. This sometimes happens in artifacts.</p>
+        <p class="mt-2"><strong>Solution:</strong> Copy this code to GitHub Pages where React works 100%.</p>
+        <button onclick="location.reload()" class="mt-3 px-4 py-2 bg-blue-600 text-white rounded">
+            🔄 Try Again
+        </button>
     </div>
-    
-    <!-- React app container -->
-    <div id="root"></div>
+</div>
 
-    <script>
-        // Global error handler
-        window.onerror = function(msg, url, line, col, error) {
-            console.error('Global Error:', msg, error);
+<!-- React app container -->
+<div id="root"></div>
+
+<script>
+    // Global error handler
+    window.onerror = function(msg, url, line, col, error) {
+        console.error('Global Error:', msg, error);
+        showError();
+        return true;
+    };
+
+    // Check if React loaded properly
+    function checkReactLoaded() {
+        if (typeof React === 'undefined' || typeof ReactDOM === 'undefined' || typeof Babel === 'undefined') {
+            console.error('React libraries not loaded properly');
             showError();
-            return true;
-        };
+            return false;
+        }
+        return true;
+    }
 
-        // Check if React loaded properly
-        function checkReactLoaded() {
-            if (typeof React === 'undefined' || typeof ReactDOM === 'undefined' || typeof Babel === 'undefined') {
-                console.error('React libraries not loaded properly');
-                showError();
-                return false;
+    function showError() {
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('error').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+        document.getElementById('loading').classList.add('hidden');
+    }
+
+    // Wait for all scripts to load
+    window.addEventListener('load', function() {
+        console.log('Page loaded, checking React...');
+        
+        setTimeout(function() {
+            if (!checkReactLoaded()) {
+                return;
             }
-            return true;
-        }
-
-        function showError() {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('error').classList.remove('hidden');
-        }
-
-        function hideLoading() {
-            document.getElementById('loading').classList.add('hidden');
-        }
-
-        // Wait for all scripts to load
-        window.addEventListener('load', function() {
-            console.log('Page loaded, checking React...');
             
-            setTimeout(function() {
-                if (!checkReactLoaded()) {
-                    return;
-                }
-                
-                try {
-                    initReactApp();
-                } catch (error) {
-                    console.error('React app initialization failed:', error);
-                    showError();
-                }
-            }, 500);
-        });
+            try {
+                initReactApp();
+            } catch (error) {
+                console.error('React app initialization failed:', error);
+                showError();
+            }
+        }, 500);
+    });
 
-        function initReactApp() {
-            console.log('Initializing React app...');
-            
-            // Inline Babel transformation
-            const jsxCode = `
-                const { useState, useEffect, useRef } = React;
+    function initReactApp() {
+        console.log('Initializing React app...');
+        
+        // Inline Babel transformation
+        const jsxCode = `
+            const { useState, useEffect, useRef } = React;
 
-                function TimeTracker() {
-                    const [entries, setEntries] = useState([]);
-                    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-                    const [editingEntry, setEditingEntry] = useState(null);
-                    const fileInputRef = useRef(null);
-                    const [newEntry, setNewEntry] = useState({
-                        category: '',
-                        description: '',
-                        hours: ''
-                    });
+            function TimeTracker() {
+                const [entries, setEntries] = useState([]);
+                const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+                const [editingEntry, setEditingEntry] = useState(null);
+                const [darkMode, setDarkMode] = useState(false);
+                const fileInputRef = useRef(null);
+                const [newEntry, setNewEntry] = useState({
+                    category: '',
+                    description: '',
+                    hours: ''
+                });
 
-                    const categories = [
-                        'Development',
-                        'Meetings',
-                        'Training',
-                        'PTO',
-                        'Testing',
-                        'Documentation',
-                        'Support',
-                        'Planning'
-                    ];
+                const categories = [
+                    'Development',
+                    'Meetings',
+                    'Training',
+                    'PTO',
+                    'Testing',
+                    'Documentation',
+                    'Support',
+                    'Planning'
+                ];
 
-                    // Load from localStorage
-                    useEffect(() => {
-                        try {
-                            const saved = localStorage.getItem('timeTrackerEntries');
-                            if (saved) {
-                                setEntries(JSON.parse(saved));
+                // Load dark mode preference
+                useEffect(() => {
+                    try {
+                        const savedDarkMode = localStorage.getItem('darkMode');
+                        if (savedDarkMode !== null) {
+                            const isDark = JSON.parse(savedDarkMode);
+                            setDarkMode(isDark);
+                            if (isDark) {
+                                document.documentElement.classList.add('dark');
+                            } else {
+                                document.documentElement.classList.remove('dark');
                             }
-                        } catch (error) {
-                            console.error('Error loading:', error);
                         }
-                    }, []);
+                    } catch (error) {
+                        console.error('Error loading dark mode:', error);
+                    }
+                }, []);
 
-                    // Save to localStorage
-                    useEffect(() => {
-                        try {
-                            localStorage.setItem('timeTrackerEntries', JSON.stringify(entries));
-                        } catch (error) {
-                            console.error('Error saving:', error);
+                // Load from localStorage
+                useEffect(() => {
+                    try {
+                        const saved = localStorage.getItem('timeTrackerEntries');
+                        if (saved) {
+                            setEntries(JSON.parse(saved));
                         }
-                    }, [entries]);
+                    } catch (error) {
+                        console.error('Error loading:', error);
+                    }
+                }, []);
 
-                    const addEntry = () => {
-                        if (newEntry.category && newEntry.description && newEntry.hours) {
-                            const entry = {
-                                id: Date.now(),
-                                date: selectedDate,
-                                category: newEntry.category,
-                                description: newEntry.description,
-                                hours: parseFloat(newEntry.hours),
-                                timestamp: new Date().toISOString()
-                            };
-                            
-                            setEntries([...entries, entry]);
-                            setNewEntry({ category: '', description: '', hours: '' });
-                        }
-                    };
+                // Save to localStorage
+                useEffect(() => {
+                    try {
+                        localStorage.setItem('timeTrackerEntries', JSON.stringify(entries));
+                    } catch (error) {
+                        console.error('Error saving:', error);
+                    }
+                }, [entries]);
 
-                    const deleteEntry = (id) => {
-                        setEntries(entries.filter(entry => entry.id !== id));
-                        setEditingEntry(null); // Close editing if this entry was being edited
-                    };
+                // Toggle dark mode
+                const toggleDarkMode = () => {
+                    const newDarkMode = !darkMode;
+                    setDarkMode(newDarkMode);
+                    localStorage.setItem('darkMode', JSON.stringify(newDarkMode));
+                    
+                    if (newDarkMode) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                };
 
-                    const startEditing = (entry) => {
-                        setEditingEntry({
-                            id: entry.id,
-                            category: entry.category,
-                            description: entry.description,
-                            hours: entry.hours.toString(),
-                            date: entry.date
-                        });
-                    };
-
-                    const cancelEditing = () => {
-                        setEditingEntry(null);
-                    };
-
-                    const saveEdit = () => {
-                        if (editingEntry && editingEntry.category && editingEntry.description && editingEntry.hours) {
-                            setEntries(entries.map(entry => 
-                                entry.id === editingEntry.id 
-                                    ? {
-                                        ...entry,
-                                        category: editingEntry.category,
-                                        description: editingEntry.description,
-                                        hours: parseFloat(editingEntry.hours),
-                                        date: editingEntry.date
-                                    }
-                                    : entry
-                            ));
-                            setEditingEntry(null);
-                        }
-                    };
-
-                    const getEntriesForDate = (date) => {
-                        return entries.filter(entry => entry.date === date);
-                    };
-
-                    const getTotalHoursForDate = (date) => {
-                        return getEntriesForDate(date).reduce((total, entry) => total + entry.hours, 0);
-                    };
-
-                    const exportData = () => {
-                        const dataToExport = {
-                            entries: entries,
-                            exportDate: new Date().toISOString(),
-                            version: "1.0"
+                const addEntry = () => {
+                    if (newEntry.category && newEntry.description && newEntry.hours) {
+                        const entry = {
+                            id: Date.now(),
+                            date: selectedDate,
+                            category: newEntry.category,
+                            description: newEntry.description,
+                            hours: parseFloat(newEntry.hours),
+                            timestamp: new Date().toISOString()
                         };
                         
-                        const dataStr = JSON.stringify(dataToExport, null, 2);
-                        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-                        
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(dataBlob);
-                        link.download = \`work-hours-\${new Date().toISOString().split('T')[0]}.json\`;
-                        link.click();
-                    };
+                        setEntries([...entries, entry]);
+                        setNewEntry({ category: '', description: '', hours: '' });
+                    }
+                };
 
-                    const importData = (event) => {
-                        const file = event.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (e) => {
-                                try {
-                                    const importedData = JSON.parse(e.target.result);
-                                    if (importedData.entries && Array.isArray(importedData.entries)) {
-                                        const existingIds = new Set(entries.map(entry => entry.id));
-                                        const newEntries = importedData.entries.filter(entry => !existingIds.has(entry.id));
-                                        setEntries([...entries, ...newEntries]);
-                                        alert(\`✅ Data imported successfully. Added \${newEntries.length} new records.\`);
-                                    } else {
-                                        alert('❌ Invalid file format');
-                                    }
-                                } catch (error) {
-                                    alert('❌ Error reading file');
+                const deleteEntry = (id) => {
+                    setEntries(entries.filter(entry => entry.id !== id));
+                    setEditingEntry(null);
+                };
+
+                const startEditing = (entry) => {
+                    setEditingEntry({
+                        id: entry.id,
+                        category: entry.category,
+                        description: entry.description,
+                        hours: entry.hours.toString(),
+                        date: entry.date
+                    });
+                };
+
+                const cancelEditing = () => {
+                    setEditingEntry(null);
+                };
+
+                const saveEdit = () => {
+                    if (editingEntry && editingEntry.category && editingEntry.description && editingEntry.hours) {
+                        setEntries(entries.map(entry => 
+                            entry.id === editingEntry.id 
+                                ? {
+                                    ...entry,
+                                    category: editingEntry.category,
+                                    description: editingEntry.description,
+                                    hours: parseFloat(editingEntry.hours),
+                                    date: editingEntry.date
                                 }
-                            };
-                            reader.readAsText(file);
-                        }
-                        event.target.value = '';
+                                : entry
+                        ));
+                        setEditingEntry(null);
+                    }
+                };
+
+                const getEntriesForDate = (date) => {
+                    return entries.filter(entry => entry.date === date);
+                };
+
+                const getTotalHoursForDate = (date) => {
+                    return getEntriesForDate(date).reduce((total, entry) => total + entry.hours, 0);
+                };
+
+                const exportData = () => {
+                    const dataToExport = {
+                        entries: entries,
+                        exportDate: new Date().toISOString(),
+                        version: "1.0"
                     };
+                    
+                    const dataStr = JSON.stringify(dataToExport, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(dataBlob);
+                    link.download = \`work-hours-\${new Date().toISOString().split('T')[0]}.json\`;
+                    link.click();
+                };
 
-                    const todayEntries = getEntriesForDate(selectedDate);
-                    const totalHours = getTotalHoursForDate(selectedDate);
-                    const workDates = [...new Set(entries.map(entry => entry.date))].sort().reverse();
+                const importData = (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            try {
+                                const importedData = JSON.parse(e.target.result);
+                                if (importedData.entries && Array.isArray(importedData.entries)) {
+                                    const existingIds = new Set(entries.map(entry => entry.id));
+                                    const newEntries = importedData.entries.filter(entry => !existingIds.has(entry.id));
+                                    setEntries([...entries, ...newEntries]);
+                                    alert(\`✅ Data imported successfully. Added \${newEntries.length} new records.\`);
+                                } else {
+                                    alert('❌ Invalid file format');
+                                }
+                            } catch (error) {
+                                alert('❌ Error reading file');
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                    event.target.value = '';
+                };
 
-                    return React.createElement('div', { className: 'max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen' },
-                        React.createElement('div', { className: 'bg-white rounded-lg shadow-lg p-6 mb-6' },
-                            // Header
-                            React.createElement('div', { className: 'flex items-center justify-between mb-6' },
-                                React.createElement('div', { className: 'flex items-center gap-3' },
-                                    React.createElement('svg', { 
-                                        className: 'w-8 h-8 text-blue-600',
-                                        fill: 'none',
-                                        stroke: 'currentColor',
-                                        viewBox: '0 0 24 24'
-                                    },
-                                        React.createElement('circle', { cx: '12', cy: '12', r: '10' }),
-                                        React.createElement('polyline', { points: '12,6 12,12 16,14' })
-                                    ),
-                                    React.createElement('h1', { className: 'text-3xl font-bold text-gray-800' }, 'Work Hours Tracker')
+                const todayEntries = getEntriesForDate(selectedDate);
+                const totalHours = getTotalHoursForDate(selectedDate);
+                const workDates = [...new Set(entries.map(entry => entry.date))].sort().reverse();
+
+                return React.createElement('div', { className: 'max-w-4xl mx-auto p-6 bg-gray-50 dark:bg-gray-900 min-h-screen' },
+                    React.createElement('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6' },
+                        // Header
+                        React.createElement('div', { className: 'flex items-center justify-between mb-6' },
+                            React.createElement('div', { className: 'flex items-center gap-3' },
+                                React.createElement('svg', { 
+                                    className: 'w-8 h-8 text-blue-600 dark:text-blue-400',
+                                    fill: 'none',
+                                    stroke: 'currentColor',
+                                    viewBox: '0 0 24 24'
+                                },
+                                    React.createElement('circle', { cx: '12', cy: '12', r: '10' }),
+                                    React.createElement('polyline', { points: '12,6 12,12 16,14' })
                                 ),
-                                // Buttons
-                                React.createElement('div', { className: 'flex items-center gap-2' },
-                                    React.createElement('button', {
-                                        onClick: exportData,
-                                        className: 'px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-2 text-sm'
-                                    }, '⬇️ Export'),
-                                    React.createElement('input', {
-                                        type: 'file',
-                                        ref: fileInputRef,
-                                        onChange: importData,
-                                        accept: '.json',
-                                        className: 'hidden'
-                                    }),
-                                    React.createElement('button', {
-                                        onClick: () => fileInputRef.current?.click(),
-                                        className: 'px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 flex items-center gap-2 text-sm'
-                                    }, '⬆️ Import')
-                                )
+                                React.createElement('h1', { className: 'text-3xl font-bold text-gray-800 dark:text-gray-100' }, 'Work Hours Tracker')
                             ),
-                            // Data info
-                            entries.length === 0 ? React.createElement('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6' },
-                                React.createElement('div', { className: 'flex items-start gap-3' },
-                                    React.createElement('div', {},
-                                        React.createElement('h3', { className: 'font-medium text-blue-800 mb-1' }, '💾 How to keep your data'),
-                                        React.createElement('p', { className: 'text-sm text-blue-700 mb-2' }, 'Data is saved automatically on this device. For backup across devices:'),
-                                        React.createElement('ul', { className: 'text-sm text-blue-700 space-y-1 ml-4' },
-                                            React.createElement('li', {}, '• Export: Download JSON with your records'),
-                                            React.createElement('li', {}, '• Import: Load JSON to restore data'),
-                                            React.createElement('li', {}, '• Save to Google Drive, Dropbox etc.'),
-                                            React.createElement('li', {}, '• Import on any device to continue'),
-                                            React.createElement('li', { className: 'font-medium text-blue-800 mt-2' }, '• ✨ New: Click Edit (✏️) to modify existing entries!')
-                                        )
+                            // Buttons
+                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                React.createElement('button', {
+                                    onClick: toggleDarkMode,
+                                    className: 'px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 flex items-center gap-2 text-sm',
+                                    title: 'Toggle dark mode'
+                                }, darkMode ? '☀️' : '🌙'),
+                                React.createElement('button', {
+                                    onClick: exportData,
+                                    className: 'px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-2 text-sm'
+                                }, '⬇️ Export'),
+                                React.createElement('input', {
+                                    type: 'file',
+                                    ref: fileInputRef,
+                                    onChange: importData,
+                                    accept: '.json',
+                                    className: 'hidden'
+                                }),
+                                React.createElement('button', {
+                                    onClick: () => fileInputRef.current?.click(),
+                                    className: 'px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 flex items-center gap-2 text-sm'
+                                }, '⬆️ Import')
+                            )
+                        ),
+                        // Data info
+                        entries.length === 0 ? React.createElement('div', { className: 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6' },
+                            React.createElement('div', { className: 'flex items-start gap-3' },
+                                React.createElement('div', {},
+                                    React.createElement('h3', { className: 'font-medium text-blue-800 dark:text-blue-300 mb-1' }, '💾 How to keep your data'),
+                                    React.createElement('p', { className: 'text-sm text-blue-700 dark:text-blue-400 mb-2' }, 'Data is saved automatically on this device. For backup across devices:'),
+                                    React.createElement('ul', { className: 'text-sm text-blue-700 dark:text-blue-400 space-y-1 ml-4' },
+                                        React.createElement('li', {}, '• Export: Download JSON with your records'),
+                                        React.createElement('li', {}, '• Import: Load JSON to restore data'),
+                                        React.createElement('li', {}, '• Save to Google Drive, Dropbox etc.'),
+                                        React.createElement('li', {}, '• Import on any device to continue'),
+                                        React.createElement('li', { className: 'font-medium text-blue-800 dark:text-blue-300 mt-2' }, '• ✨ New: Click Edit (✏️) to modify existing entries!')
                                     )
                                 )
-                            ) : null,
-                            // Date
-                            React.createElement('div', { className: 'mb-6' },
-                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, '📅 Work date'),
+                            )
+                        ) : null,
+                        // Date
+                        React.createElement('div', { className: 'mb-6' },
+                            React.createElement('label', { className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2' }, '📅 Work date'),
+                            React.createElement('input', {
+                                type: 'date',
+                                value: selectedDate,
+                                onChange: (e) => setSelectedDate(e.target.value),
+                                className: 'px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                            })
+                        ),
+                        // Form
+                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-4 mb-6' },
+                            React.createElement('div', {},
+                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' }, 'Category'),
+                                React.createElement('select', {
+                                    value: newEntry.category,
+                                    onChange: (e) => setNewEntry({...newEntry, category: e.target.value}),
+                                    className: 'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                                },
+                                    React.createElement('option', { value: '' }, 'Select...'),
+                                    ...categories.map(cat => React.createElement('option', { key: cat, value: cat }, cat))
+                                )
+                            ),
+                            React.createElement('div', {},
+                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' }, 'Description/Ticket'),
                                 React.createElement('input', {
-                                    type: 'date',
-                                    value: selectedDate,
-                                    onChange: (e) => setSelectedDate(e.target.value),
-                                    className: 'px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                    type: 'text',
+                                    placeholder: 'e.g: TAM-299, project meeting...',
+                                    value: newEntry.description,
+                                    onChange: (e) => setNewEntry({...newEntry, description: e.target.value}),
+                                    onKeyPress: (e) => e.key === 'Enter' && addEntry(),
+                                    className: 'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500'
                                 })
                             ),
-                            // Form
-                            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-4 mb-6' },
-                                React.createElement('div', {},
-                                    React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Category'),
-                                    React.createElement('select', {
-                                        value: newEntry.category,
-                                        onChange: (e) => setNewEntry({...newEntry, category: e.target.value}),
-                                        className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                                    },
-                                        React.createElement('option', { value: '' }, 'Select...'),
-                                        ...categories.map(cat => React.createElement('option', { key: cat, value: cat }, cat))
-                                    )
-                                ),
-                                React.createElement('div', {},
-                                    React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Description/Ticket'),
-                                    React.createElement('input', {
-                                        type: 'text',
-                                        placeholder: 'e.g: TAM-299, project meeting...',
-                                        value: newEntry.description,
-                                        onChange: (e) => setNewEntry({...newEntry, description: e.target.value}),
-                                        onKeyPress: (e) => e.key === 'Enter' && addEntry(),
-                                        className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                                    })
-                                ),
-                                React.createElement('div', {},
-                                    React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Hours'),
-                                    React.createElement('input', {
-                                        type: 'number',
-                                        step: '0.5',
-                                        min: '0',
-                                        max: '8',
-                                        placeholder: '1.5',
-                                        value: newEntry.hours,
-                                        onChange: (e) => setNewEntry({...newEntry, hours: e.target.value}),
-                                        onKeyPress: (e) => e.key === 'Enter' && addEntry(),
-                                        className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                                    })
-                                ),
-                                React.createElement('div', { className: 'flex items-end' },
-                                    React.createElement('button', {
-                                        onClick: addEntry,
-                                        className: 'w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2'
-                                    }, '➕ Add')
+                            React.createElement('div', {},
+                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' }, 'Hours'),
+                                React.createElement('input', {
+                                    type: 'number',
+                                    step: '0.5',
+                                    min: '0',
+                                    max: '8',
+                                    placeholder: '1.5',
+                                    value: newEntry.hours,
+                                    onChange: (e) => setNewEntry({...newEntry, hours: e.target.value}),
+                                    onKeyPress: (e) => e.key === 'Enter' && addEntry(),
+                                    className: 'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500'
+                                })
+                            ),
+                            React.createElement('div', { className: 'flex items-end' },
+                                React.createElement('button', {
+                                    onClick: addEntry,
+                                    className: 'w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2'
+                                }, '➕ Add')
+                            )
+                        ),
+                        // Summary
+                        React.createElement('div', {
+                            className: \`p-4 rounded-lg mb-6 \${totalHours === 8 ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700' : totalHours > 8 ? 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700' : 'bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700'}\`
+                        },
+                            React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                React.createElement('span', { className: 'text-xl' }, totalHours === 8 ? '✅' : '⚠️'),
+                                React.createElement('h3', { className: 'font-semibold text-lg text-gray-900 dark:text-gray-100' },
+                                    \`\${selectedDate === new Date().toISOString().split('T')[0] ? 'Today' : selectedDate}: \${totalHours}/8 hours\`
                                 )
                             ),
-                            // Summary
-                            React.createElement('div', {
-                                className: \`p-4 rounded-lg mb-6 \${totalHours === 8 ? 'bg-green-50 border border-green-200' : totalHours > 8 ? 'bg-red-50 border border-red-200' : 'bg-yellow-50 border border-yellow-200'}\`
-                            },
-                                React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                    React.createElement('span', { className: 'text-xl' }, totalHours === 8 ? '✅' : '⚠️'),
-                                    React.createElement('h3', { className: 'font-semibold text-lg' },
-                                        \`\${selectedDate === new Date().toISOString().split('T')[0] ? 'Today' : selectedDate}: \${totalHours}/8 hours\`
-                                    )
-                                ),
-                                todayEntries.length > 0 ? React.createElement('div', { className: 'space-y-2' },
-                                    ...todayEntries.map(entry => {
-                                        const isEditing = editingEntry && editingEntry.id === entry.id;
-                                        
-                                        if (isEditing) {
-                                            // Edit mode
-                                            return React.createElement('div', { key: entry.id, className: 'bg-blue-50 border border-blue-200 p-3 rounded' },
-                                                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-2 mb-3' },
-                                                    React.createElement('select', {
-                                                        value: editingEntry.category,
-                                                        onChange: (e) => setEditingEntry({...editingEntry, category: e.target.value}),
-                                                        className: 'edit-select'
-                                                    },
-                                                        ...categories.map(cat => React.createElement('option', { key: cat, value: cat }, cat))
-                                                    ),
-                                                    React.createElement('input', {
-                                                        type: 'text',
-                                                        value: editingEntry.description,
-                                                        onChange: (e) => setEditingEntry({...editingEntry, description: e.target.value}),
-                                                        className: 'edit-input',
-                                                        placeholder: 'Description/Ticket'
-                                                    }),
-                                                    React.createElement('input', {
-                                                        type: 'number',
-                                                        step: '0.5',
-                                                        min: '0',
-                                                        max: '8',
-                                                        value: editingEntry.hours,
-                                                        onChange: (e) => setEditingEntry({...editingEntry, hours: e.target.value}),
-                                                        className: 'edit-input',
-                                                        placeholder: 'Hours'
-                                                    }),
-                                                    React.createElement('input', {
-                                                        type: 'date',
-                                                        value: editingEntry.date,
-                                                        onChange: (e) => setEditingEntry({...editingEntry, date: e.target.value}),
-                                                        className: 'edit-input'
-                                                    })
+                            todayEntries.length > 0 ? React.createElement('div', { className: 'space-y-2' },
+                                ...todayEntries.map(entry => {
+                                    const isEditing = editingEntry && editingEntry.id === entry.id;
+                                    
+                                    if (isEditing) {
+                                        // Edit mode
+                                        return React.createElement('div', { key: entry.id, className: 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 p-3 rounded' },
+                                            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-2 mb-3' },
+                                                React.createElement('select', {
+                                                    value: editingEntry.category,
+                                                    onChange: (e) => setEditingEntry({...editingEntry, category: e.target.value}),
+                                                    className: 'edit-select'
+                                                },
+                                                    ...categories.map(cat => React.createElement('option', { key: cat, value: cat }, cat))
                                                 ),
-                                                React.createElement('div', { className: 'flex items-center gap-2' },
-                                                    React.createElement('button', {
-                                                        onClick: saveEdit,
-                                                        className: 'px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700'
-                                                    }, '💾 Save'),
-                                                    React.createElement('button', {
-                                                        onClick: cancelEditing,
-                                                        className: 'px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700'
-                                                    }, '❌ Cancel')
-                                                )
-                                            );
-                                        } else {
-                                            // View mode
-                                            return React.createElement('div', { key: entry.id, className: 'flex items-center justify-between bg-white p-3 rounded border' },
-                                                React.createElement('div', { className: 'flex-1' },
-                                                    React.createElement('span', { className: 'font-medium text-blue-600' }, entry.category),
-                                                    ' • ',
-                                                    React.createElement('span', { className: 'text-gray-700' }, entry.description),
-                                                    ' • ',
-                                                    React.createElement('span', { className: 'font-medium' }, \`\${entry.hours}h\`)
+                                                React.createElement('input', {
+                                                    type: 'text',
+                                                    value: editingEntry.description,
+                                                    onChange: (e) => setEditingEntry({...editingEntry, description: e.target.value}),
+                                                    className: 'edit-input',
+                                                    placeholder: 'Description/Ticket'
+                                                }),
+                                                React.createElement('input', {
+                                                    type: 'number',
+                                                    step: '0.5',
+                                                    min: '0',
+                                                    max: '8',
+                                                    value: editingEntry.hours,
+                                                    onChange: (e) => setEditingEntry({...editingEntry, hours: e.target.value}),
+                                                    className: 'edit-input',
+                                                    placeholder: 'Hours'
+                                                }),
+                                                React.createElement('input', {
+                                                    type: 'date',
+                                                    value: editingEntry.date,
+                                                    onChange: (e) => setEditingEntry({...editingEntry, date: e.target.value}),
+                                                    className: 'edit-input'
+                                                })
+                                            ),
+                                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                                React.createElement('button', {
+                                                    onClick: saveEdit,
+                                                    className: 'px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700'
+                                                }, '💾 Save'),
+                                                React.createElement('button', {
+                                                    onClick: cancelEditing,
+                                                    className: 'px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700'
+                                                }, '❌ Cancel')
+                                            )
+                                        );
+                                    } else {
+                                        // View mode
+                                        return React.createElement('div', { key: entry.id, className: 'flex items-center justify-between bg-white dark:bg-gray-700 p-3 rounded border border-gray-200 dark:border-gray-600' },
+                                            React.createElement('div', { className: 'flex-1' },
+                                                React.createElement('span', { className: 'font-medium text-blue-600 dark:text-blue-400' }, entry.category),
+                                                ' • ',
+                                                React.createElement('span', { className: 'text-gray-700 dark:text-gray-300' }, entry.description),
+                                                ' • ',
+                                                React.createElement('span', { className: 'font-medium text-gray-900 dark:text-gray-100' }, \`\${entry.hours}h\`)
+                                            ),
+                                            React.createElement('div', { className: 'flex items-center gap-1 ml-2' },
+                                                React.createElement('button', {
+                                                    onClick: () => startEditing(entry),
+                                                    className: 'text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-1 text-sm',
+                                                    title: 'Edit entry'
+                                                }, '✏️'),
+                                                React.createElement('button', {
+                                                    onClick: () => deleteEntry(entry.id),
+                                                    className: 'text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1 text-sm',
+                                                    title: 'Delete entry'
+                                                }, '🗑️')
+                                            )
+                                        );
+                                    }
+                                })
+                            ) : null
+                        )
+                    ),
+                    // History
+                    workDates.length > 0 ? React.createElement('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6' },
+                        React.createElement('h2', { className: 'text-xl font-bold text-gray-800 dark:text-gray-100 mb-4' }, 'Work History'),
+                        React.createElement('div', { className: 'space-y-4' },
+                            ...workDates.map(date => {
+                                const dayEntries = getEntriesForDate(date);
+                                const dayTotal = getTotalHoursForDate(date);
+                                const badgeColor = dayTotal === 8 ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' : 
+                                                 dayTotal > 8 ? 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' : 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300';
+                                
+                                return React.createElement('div', { key: date, className: 'border border-gray-200 dark:border-gray-700 rounded-lg p-4' },
+                                    React.createElement('div', { className: 'flex items-center justify-between mb-3' },
+                                        React.createElement('h3', { className: 'font-semibold text-lg text-gray-800 dark:text-gray-200' },
+                                            new Date(date + 'T00:00:00').toLocaleDateString('en-US', { 
+                                                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+                                            })
+                                        ),
+                                        React.createElement('span', { className: \`px-3 py-1 rounded-full text-sm font-medium \${badgeColor}\` },
+                                            \`\${dayTotal}/8h\`
+                                        )
+                                    ),
+                                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-2' },
+                                        ...dayEntries.map(entry =>
+                                            React.createElement('div', { key: entry.id, className: 'text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-2 rounded flex justify-between items-center' },
+                                                React.createElement('span', {},
+                                                    React.createElement('strong', {}, entry.category), \` \${entry.description} \`, React.createElement('em', {}, \`\${entry.hours}h\`)
                                                 ),
-                                                React.createElement('div', { className: 'flex items-center gap-1 ml-2' },
+                                                React.createElement('div', { className: 'flex gap-1' },
                                                     React.createElement('button', {
-                                                        onClick: () => startEditing(entry),
-                                                        className: 'text-blue-500 hover:text-blue-700 p-1 text-sm',
-                                                        title: 'Edit entry'
+                                                        onClick: () => {
+                                                            setSelectedDate(entry.date);
+                                                            startEditing(entry);
+                                                        },
+                                                        className: 'text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-xs',
+                                                        title: 'Edit this entry'
                                                     }, '✏️'),
                                                     React.createElement('button', {
                                                         onClick: () => deleteEntry(entry.id),
-                                                        className: 'text-red-500 hover:text-red-700 p-1 text-sm',
-                                                        title: 'Delete entry'
+                                                        className: 'text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs',
+                                                        title: 'Delete this entry'
                                                     }, '🗑️')
-                                                )
-                                            );
-                                        }
-                                    })
-                                ) : null
-                            )
-                        ),
-                        // History
-                        workDates.length > 0 ? React.createElement('div', { className: 'bg-white rounded-lg shadow-lg p-6' },
-                            React.createElement('h2', { className: 'text-xl font-bold text-gray-800 mb-4' }, 'Work History'),
-                            React.createElement('div', { className: 'space-y-4' },
-                                ...workDates.map(date => {
-                                    const dayEntries = getEntriesForDate(date);
-                                    const dayTotal = getTotalHoursForDate(date);
-                                    const badgeColor = dayTotal === 8 ? 'bg-green-100 text-green-800' : 
-                                                     dayTotal > 8 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
-                                    
-                                    return React.createElement('div', { key: date, className: 'border border-gray-200 rounded-lg p-4' },
-                                        React.createElement('div', { className: 'flex items-center justify-between mb-3' },
-                                            React.createElement('h3', { className: 'font-semibold text-lg text-gray-800' },
-                                                new Date(date + 'T00:00:00').toLocaleDateString('en-US', { 
-                                                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-                                                })
-                                            ),
-                                            React.createElement('span', { className: \`px-3 py-1 rounded-full text-sm font-medium \${badgeColor}\` },
-                                                \`\${dayTotal}/8h\`
-                                            )
-                                        ),
-                                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-2' },
-                                            ...dayEntries.map(entry =>
-                                                React.createElement('div', { key: entry.id, className: 'text-sm text-gray-600 bg-gray-50 p-2 rounded flex justify-between items-center' },
-                                                    React.createElement('span', {},
-                                                        React.createElement('strong', {}, entry.category), \` \${entry.description} \`, React.createElement('em', {}, \`\${entry.hours}h\`)
-                                                    ),
-                                                    React.createElement('div', { className: 'flex gap-1' },
-                                                        React.createElement('button', {
-                                                            onClick: () => {
-                                                                setSelectedDate(entry.date);
-                                                                startEditing(entry);
-                                                            },
-                                                            className: 'text-blue-500 hover:text-blue-700 text-xs',
-                                                            title: 'Edit this entry'
-                                                        }, '✏️'),
-                                                        React.createElement('button', {
-                                                            onClick: () => deleteEntry(entry.id),
-                                                            className: 'text-red-500 hover:text-red-700 text-xs',
-                                                            title: 'Delete this entry'
-                                                        }, '🗑️')
-                                                    )
                                                 )
                                             )
                                         )
-                                    );
-                                })
-                            )
-                        ) : null
-                    );
-                }
-
-                ReactDOM.render(React.createElement(TimeTracker), document.getElementById('root'));
-            `;
-
-            try {
-                // Transform JSX using Babel
-                const transformedCode = Babel.transform(jsxCode, {
-                    presets: ['react']
-                }).code;
-
-                // Execute the transformed code
-                eval(transformedCode);
-                
-                hideLoading();
-                console.log('✅ React app loaded successfully!');
-                
-            } catch (error) {
-                console.error('❌ Babel transformation failed:', error);
-                showError();
+                                    )
+                                );
+                            })
+                        )
+                    ) : null
+                );
             }
+
+            ReactDOM.render(React.createElement(TimeTracker), document.getElementById('root'));
+        `;
+
+        try {
+            // Transform JSX using Babel
+            const transformedCode = Babel.transform(jsxCode, {
+                presets: ['react']
+            }).code;
+
+            // Execute the transformed code
+            eval(transformedCode);
+            
+            hideLoading();
+            console.log('✅ React app loaded successfully!');
+            
+        } catch (error) {
+            console.error('❌ Babel transformation failed:', error);
+            showError();
         }
-    </script>
+    }
+</script>
+```
+
 </body>
 </html>
